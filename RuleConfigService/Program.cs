@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
 using RuleConfigService.Models;
 
 var builder = WebApplication.CreateBuilder(args);

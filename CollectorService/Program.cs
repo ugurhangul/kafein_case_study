@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSingleton<IKafkaProducer>(sp =>
+builder.Services.AddSingleton<IKafkaProducer>(_ =>
 {
     // Configure Kafka Producer
     var kafkaConfig = new ProducerConfig { BootstrapServers = "kafka:9092" };

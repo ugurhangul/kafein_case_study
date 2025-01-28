@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
 using Nest;
-using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
