@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # Zookeeper (Kafka için gerekli)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+
+  # Kafka
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+
+  # PostgreSQL
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: configdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms2g -Xmx2g
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+  collector-service:
+    build:
+      context: ./CollectorService  # Dockerfile'ın bulunduğu klasör
+      dockerfile: Dockerfile       # Dockerfile'ın adı (default ise gerekmez)
+    container_name: collector-service
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    networks:
+      - default
+    ports:
+      - "5000:8080"
+  processor-service:
+    build:
+      context: ./ProcessorService
+    container_name: processor-service
+    depends_on:
+      - kafka
+      - elasticsearch
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    networks:
+      - default
+    ports:
+      - "5005:8080"
+  rule-config-service:
+    build:
+      context: ./RuleConfigService
+    container_name: rule-config-service
+    depends_on:
+      - postgres
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin123
+      - POSTGRES_DB=configdb
+      - ConnectionStrings__PostgresConnection=Host=postgres;Database=configdb;Username=admin;Password=admin123
+    networks:
+      - default
+    ports:
+      - "5001:5001"
+  reporting-alerting-service:
+    build:
+      context: ./ReportingAlertingService
+    container_name: reporting-alerting-service
+    depends_on:
+      - elasticsearch
+      - rule-config-service
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    networks:
+      - default
+    ports:
+      - "5002:8080"
+
+
+volumes:
+  postgres_data:
+    driver: local
