@@ -37,6 +37,7 @@ public class KafkaProducer(ProducerConfig config) : IKafkaProducer
 {
     private readonly IProducer<string, string> _producer = new ProducerBuilder<string, string>(config).Build();
 
+  
     public async Task<string> ProduceAsync(string topic, AuditEvent auditEvent)
     {
         var message = new Message<string, string>
