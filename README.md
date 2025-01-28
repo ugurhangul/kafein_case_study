@@ -124,7 +124,43 @@ Belirli bir tarih aralığındaki kritik olayları sorgulamak için:
 
 ---
 
-## **4. Hata Giderme**
+## **4. Endpoint Listesi**
+
+### **Collector Service**
+1. **POST /produce**: Event üretip Kafka’ya gönderir.
+   - Örnek Kullanım:
+     ```bash
+     curl -X POST http://localhost:5000/produce -H "Content-Type: application/json" -d '{ "EventType": "SELECT", "Username": "user1", "DatabaseName": "test_db", "Statement": "SELECT * FROM users", "Severity": "High" }'
+     ```
+
+### **Processor Service**
+1. **(Internal)**: Kafka’dan event tüketir ve Elasticsearch’e kaydeder. Public bir endpoint yoktur.
+
+### **Rule/Config Service**
+1. **GET /api/rules**: Tüm kuralları döner.
+   - Örnek Kullanım:
+     ```bash
+     curl -X GET http://localhost:5001/api/rules
+     ```
+
+### **Reporting/Alerting Service**
+1. **GET /api/reports/critical-events**: Kritik olayları sorgular.
+   - Parametreler:
+     - `startDate`: Başlangıç tarihi (ISO 8601 formatında).
+     - `endDate`: Bitiş tarihi (ISO 8601 formatında).
+   - Örnek Kullanım:
+     ```bash
+     curl -X GET "http://localhost:5005/api/reports/critical-events?startDate=2025-01-01&endDate=2025-01-27"
+     ```
+2. **GET /api/reports/config/rules**: Rule/Config Service’den kuralları getirir.
+   - Örnek Kullanım:
+     ```bash
+     curl -X GET http://localhost:5005/api/reports/config/rules
+     ```
+
+---
+
+## **5. Hata Giderme**
 ### **a. Kafka Bağlantı Sorunları**
 - Eğer Kafka’ya bağlanamıyorsanız:
   1. Kafka konteynerinin çalıştığından emin olun:
@@ -155,7 +191,7 @@ Belirli bir tarih aralığındaki kritik olayları sorgulamak için:
 
 ---
 
-## **5. Genel Test Senaryosu**
+## **6. Genel Test Senaryosu**
 1. **Event Üret:**
    - Collector Service üzerinden Kafka’ya bir event gönder.
 
@@ -170,9 +206,8 @@ Belirli bir tarih aralığındaki kritik olayları sorgulamak için:
 
 ---
 
-## **6. Ek Notlar**
+## **7. Ek Notlar**
 - Herhangi bir servis çalıştırılamazsa veya beklenmeyen bir hata oluşursa, logları kontrol edin.
 - Geliştirme ortamında `docker-compose.override.yml` kullanarak servis ayarlarını özelleştirebilirsiniz.
 
 Bu kılavuzu takip ederek tüm mikroservislerinizi kolayca çalıştırabilir ve test edebilirsiniz. 😊
-
