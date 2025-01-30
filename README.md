@@ -152,10 +152,15 @@ Belirli bir tarih aralığındaki kritik olayları sorgulamak için:
      ```bash
      curl -X GET "http://localhost:5002/api/reports/critical-events?startDate=2025-01-01&endDate=2025-01-27"
      ```
-        ```bash
+2. **GET /api/reports/audit-events**: Diğer olayları sorgular.
+   - Parametreler:
+     - `startDate`: Başlangıç tarihi (ISO 8601 formatında).
+     - `endDate`: Bitiş tarihi (ISO 8601 formatında).
+   - Örnek Kullanım:
+     ```bash
      curl -X GET "http://localhost:5002/api/reports/audit-events?startDate=2025-01-01&endDate=2025-01-27"
      ```
-2. **GET /api/reports/config/rules**: Rule/Config Service’den kuralları getirir.
+3. **GET /api/reports/config/rules**: Rule/Config Service’den kuralları getirir.
    - Örnek Kullanım:
      ```bash
      curl -X GET http://localhost:5002/api/reports/config/rules
