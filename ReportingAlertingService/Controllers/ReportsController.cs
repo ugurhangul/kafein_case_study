@@ -35,6 +35,32 @@ public class ReportsController(IElasticClient elasticClient, IHttpClientFactory 
         return Ok(allRecordsResponse.Documents);
     }
 
+    // Endpoint to fetch critical events from Elasticsearch between the provided startDate and endDate
+    [HttpGet("audit-events")]
+    public async Task<IActionResult> GetOtherEvents(DateTime startDate, DateTime endDate)
+    {
+        // Perform a search query using Elasticsearch client to fetch records from the "audit-events" index
+        // where IsCritical is not true
+        var allRecordsResponse = await elasticClient.SearchAsync<AuditEvent>(s => s
+                .Index("audit-events") // Specify the Elasticsearch index name
+                .Query(q => q.MatchAll() && q.Term(ev => ev.IsCritical, false)) // Filter to only critical events
+        );
+
+        // Check if the response from Elasticsearch is valid
+        if (!allRecordsResponse.IsValid)
+        {
+            // Log the Elasticsearch error message to the console
+            Console.WriteLine($"Elasticsearch error: {allRecordsResponse.ServerError.Error.Reason}");
+            
+            // Return a 500 error response indicating that fetching data failed
+            return Problem("Failed to fetch events from Elasticsearch.");
+        }
+
+        // Return the documents fetched from Elasticsearch as a response in case of a valid response
+        return Ok(allRecordsResponse.Documents);
+    }
+
+    
     // Endpoint to fetch rules from a remote configuration service via HTTP
     [HttpGet("config/rules")]
     public async Task<IActionResult> GetRulesFromConfigService()

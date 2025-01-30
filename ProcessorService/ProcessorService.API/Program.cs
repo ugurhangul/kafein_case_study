@@ -15,7 +15,7 @@ namespace ProcessorService.API
           
 
             // Register Elasticsearch client as a singleton for application-wide reuse
-            builder.Services.AddSingleton<IElasticClient>(_ =>
+            builder.Services.AddScoped<IElasticClient>(_ =>
             {
                 // Define connection settings for Elasticsearch, with default index set to "audit-events"
                 var settings = new ConnectionSettings(new Uri("http://elasticsearch:9200"))
@@ -24,29 +24,14 @@ namespace ProcessorService.API
             });
 
             // Register the event repository (implementation backed by Elasticsearch)
-            builder.Services.AddSingleton<IEventRepository, ElasticsearchEventRepository>();
+            builder.Services.AddScoped<IEventRepository, ElasticsearchEventRepository>();
 
             // Register the event processor service with scoped lifetime (created per request)
-            builder.Services.AddScoped<IEventProcessor, EventProcessorService>(sp =>
-            {
-                // Retrieve event repository instance from DI container
-                var repository = sp.GetRequiredService<IEventRepository>();
-
-                // Define a set of rules for processing audit events
-                var rules = new List<Rule>
-                {
-                    new() { EventType = "SELECT", IsCritical = false }, // Non-critical SELECT events
-                    new() { EventType = "UPDATE", IsCritical = true }, // Critical UPDATE events
-                    new() { EventType = "DELETE", IsCritical = true } // Critical DELETE events
-                };
-
-                // Return a new instance of EventProcessorService with the repository and rules
-                return new EventProcessorService(repository, rules);
-            });
-
+            builder.Services.AddScoped<IEventProcessor, EventProcessorService>();
+            builder.Services.AddScoped<RuleConfigService>();
             // Register support for controllers in the application
             builder.Services.AddControllers();
-
+            builder.Services.AddHostedService<Worker>();
             var app = builder.Build(); // Build the application pipeline
 
             // Map a POST endpoint for processing audit events

@@ -17,9 +17,13 @@ public class ElasticsearchEventRepository(IElasticClient elasticClient) : IEvent
         // Ensure the index exists in Elasticsearch, create it if necessary
         await EnsureIndexExistsAsync(indexName);
 
+        Console.WriteLine($"Saving event to {indexName} index");
+        
         // Indexes the audit event into the specified index
         var response = await elasticClient.IndexAsync(auditEvent, i => i.Index(indexName));
 
+        Console.WriteLine($"Event saved to {indexName} index response: {response.IsValid}");
+        
         // Return whether the indexing operation was successful
         return response.IsValid;
     }
@@ -29,10 +33,14 @@ public class ElasticsearchEventRepository(IElasticClient elasticClient) : IEvent
     // Returns true if the index exists or was successfully created.
     public async Task<bool> EnsureIndexExistsAsync(string indexName)
     {
+        Console.WriteLine($"Ensuring index {indexName} exists");
+        
         // Check if the specified index already exists
         var existsResponse = await elasticClient.Indices.ExistsAsync(indexName);
         if (existsResponse.Exists) return true; // Return early if the index already exists
 
+        Console.WriteLine($"Index {indexName} does not exist, creating it");
+        
         // Create the index with mappings for AuditEvent if it doesn't exist
         var createResponse = await elasticClient.Indices.CreateAsync(indexName, c => c
             .Map<AuditEvent>(m => m
